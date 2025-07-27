@@ -1,0 +1,101 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.vittoriomattei.ContextFetcher</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>ContextFetcher</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor url="https://www.vittoriomattei.com">Vittorio Mattei</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description><![CDATA[
+    Helper utility to fetch context to be fed to AI chats.<br>
+    This plugin will help with selecting files, getting the context and copying it to any AI Chat.
+  ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Tool Window -->
+        <toolWindow
+                id="ContextAggregator"
+                anchor="right"
+                factoryClass="com.vittoriomattei.contextfetcher.ui.ContextAggregatorToolWindowFactory"/>
+
+
+        <!-- Project Service for File Management -->
+        <projectService
+                serviceInterface="com.vittoriomattei.contextfetcher.services.FileAggregatorService"
+                serviceImplementation="com.vittoriomattei.contextfetcher.services.FileAggregatorServiceImpl"/>
+
+
+    </extensions>
+    <actions>
+        <!-- Main Actions -->
+        <group id="ContextAggregator.MainGroup" text="Context Aggregator" popup="true">
+            <action id="ContextAggregator.AddCurrentFile"
+                    class="com.vittoriomattei.contextfetcher.actions.AddCurrentFileAction"
+                    text="Add Current File to Context"
+                    description="Add the currently open file to context"/>
+
+            <action id="ContextAggregator.AddOpenFiles"
+                    class="com.vittoriomattei.contextfetcher.actions.AddOpenFilesAction"
+                    text="Add All Open Files to Context"
+                    description="Add all currently open files to context"/>
+
+            <action id="ContextAggregator.RunAggregation"
+                    class="com.vittoriomattei.contextfetcher.actions.RunAggregationAction"
+                    text="Generate Context Output"
+                    description="Generate formatted output of all files in context"/>
+
+            <action id="ContextAggregator.AddSelectionAction"
+                    class="com.vittoriomattei.contextfetcher.actions.AddSelectionAction"
+                    text="Add Selection to Context"
+                    description="Adds selected lines or the current line to a custom context."/>
+
+        </group>
+
+        <action id="ContextAggregator.AddDirectory" class="com.vittoriomattei.contextfetcher.actions.AddDirectory"
+                text="Add Selected Directory"
+                description="Add all files in the selected directory to the context"/>
+
+
+        <!-- Add to main menu -->
+        <group id="ContextAggregator.MainMenu">
+            <reference ref="ContextAggregator.MainGroup"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
+
+        <!-- Add to editor popup -->
+        <group id="ContextAggregator.SubMenu" text="My Context Actions" popup="true">
+
+            <reference ref="ContextAggregator.AddCurrentFile"/>
+
+            <reference ref="ContextAggregator.AddSelectionAction"/>
+
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </group>
+
+        <!-- Add to Tab Popup menu -->
+        <group id="ContextAggregator.TabMenu">
+            <reference ref="ContextAggregator.AddCurrentFile"/>
+            <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+        </group>
+
+
+        <!-- Add to Left Pane menu -->
+        <group id="ContextAggregator.PaneMenu">
+            <reference ref="ContextAggregator.AddCurrentFile"/>
+            <reference ref="ContextAggregator.AddDirectory"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+        </group>
+    </actions>
+</idea-plugin>
