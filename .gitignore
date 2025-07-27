@@ -44,4 +44,5 @@ bin/
 .run
 .kotlin
 .idea
+.intellijPlatform
 lib
