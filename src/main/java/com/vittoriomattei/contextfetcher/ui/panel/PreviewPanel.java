@@ -1,155 +1,76 @@
 package com.vittoriomattei.contextfetcher.ui.panel;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
-import com.vittoriomattei.contextfetcher.model.FileEntry;
+import com.vittoriomattei.contextfetcher.listeners.ContextUpdateListener;
 import com.vittoriomattei.contextfetcher.services.ContextGeneratorService;
-import com.vittoriomattei.contextfetcher.services.FileAggregatorService;
-import com.vittoriomattei.contextfetcher.model.LineRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.util.HashMap;
-import java.util.List;
 
-public class PreviewPanel extends JPanel {
+public class PreviewPanel extends JPanel implements ContextUpdateListener, Disposable {
 
     private final Project project;
-    private final FileAggregatorService fileService;
+    private final ContextGeneratorService contextService;
     private final EditorTextField codePreviewField;
-    private final JButton copyButton;
-    private final JButton clearButton;
     private final JLabel statusLabel;
 
-    public PreviewPanel(Project project, FileAggregatorService fileService) {
+    public PreviewPanel(Project project, ContextGeneratorService contextService) {
         super(new BorderLayout());
         this.project = project;
-        this.fileService = fileService;
+        this.contextService = contextService;
 
-        this.codePreviewField = createCodeEditor();
-        this.copyButton = new JButton("Copy to Clipboard");
-        this.clearButton = new JButton("Clear text");
-        this.statusLabel = new JLabel(" "); // Space to maintain height
+        this.codePreviewField = createCodeEditor();;
+        this.statusLabel = new JBLabel(" "); // Space to maintain height
+
 
         setupComponents();
-        layoutComponents();
-        setupListeners();
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+
+        ActionToolbar actionToolbar = getActionToolbar();
+
+        topPanel.add(actionToolbar.getComponent(), BorderLayout.WEST); // Buttons on the left
+        topPanel.add(statusLabel, BorderLayout.CENTER);               // Status label takes remaining space
+
+        add(topPanel, BorderLayout.NORTH);
+        add(codePreviewField.getComponent(), BorderLayout.CENTER); // Use getComponent() for an Editor
+        this.contextService.addContextUpdateListener(this);
+    }
+
+    private @NotNull ActionToolbar getActionToolbar() {
+        ActionManager actionManager = ActionManager.getInstance();
+        ActionGroup actionGroup = (ActionGroup) actionManager.getAction("ContextFetcher.GeneratedContextToolbar");
+
+        ActionToolbar actionToolbar = actionManager.createActionToolbar(
+                "ContextFetcherPreviewToolbar",
+                actionGroup,
+                true // true for horizontal layout
+        );
+        actionToolbar.setTargetComponent(this); // Important for actions to get context
+        return actionToolbar;
     }
 
     private void setupComponents() {
         codePreviewField.setBorder(JBUI.Borders.empty(5));
 
-        // Style buttons
-        copyButton.setEnabled(false); // Initially disabled until content is generated
-        clearButton.setFont(clearButton.getFont().deriveFont(Font.BOLD));
 
         // Style status label
-        statusLabel.setFont(statusLabel.getFont().deriveFont(Font.ITALIC, 11f));
+        statusLabel.setBorder(JBUI.Borders.emptyLeft(10)); // Add some space from the buttons
+        statusLabel.setFont(JBUI.Fonts.smallFont().deriveFont(Font.ITALIC));
         statusLabel.setForeground(UIManager.getColor("Label.disabledForeground"));
     }
 
-    private void layoutComponents() {
-        // Create top button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        buttonPanel.add(clearButton);
-        buttonPanel.add(copyButton);
-        buttonPanel.add(Box.createHorizontalStrut(10)); // Spacer
-        buttonPanel.add(statusLabel);
-
-        // Add components to main panel
-        add(buttonPanel, BorderLayout.NORTH);
-        add(codePreviewField, BorderLayout.CENTER);
-    }
-
-    private void setupListeners() {
-        clearButton.addActionListener(e -> clearPreview());
-        copyButton.addActionListener(e -> copyToClipboard());
-    }
-
-    public void generateContext() {
-        try {
-            @NotNull List<FileEntry> files = fileService.getFileEntries();
-
-            if (files.isEmpty()) {
-                codePreviewField.setText("No files or snippets selected for context generation.");
-                statusLabel.setText("No content to generate");
-                copyButton.setEnabled(false);
-                return;
-            }
-
-            statusLabel.setText("Generating context...");
-
-            // Generate context on background thread to avoid UI blocking
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    ContextGeneratorService contextGeneratorService = new ContextGeneratorService(files);
-                    String context = contextGeneratorService.generateContext();
-
-                    codePreviewField.setText(context);
-                    copyButton.setEnabled(true);
-
-                    // Update status with file count
-                    int fileCount = files.size();
-
-                    int snippetCount = 0;
-                    for (FileEntry file : files) {
-                        snippetCount += file.getSnippets().size();
-                    }
-
-                    String status = String.format("Context generated: %d file(s)", fileCount);
-                    if (snippetCount > 0) {
-                        status += String.format(", %d snippet(s)", snippetCount);
-                    }
-                    statusLabel.setText(status);
-
-                } catch (Exception ex) {
-                    codePreviewField.setText("Error generating context: " + ex.getMessage());
-                    statusLabel.setText("Generation failed");
-                    copyButton.setEnabled(false);
-                }
-            });
-
-        } catch (Exception e) {
-            codePreviewField.setText("Error generating context: " + e.getMessage());
-            statusLabel.setText("Generation failed");
-            copyButton.setEnabled(false);
-        }
-    }
-
-    private void copyToClipboard() {
-        String text = codePreviewField.getText();
-        if (hasContent()) {
-            CopyPasteManager.getInstance().setContents(new StringSelection(text));
-
-            // Provide visual feedback
-            String originalText = statusLabel.getText();
-            statusLabel.setText("Copied to clipboard!");
-
-            // Reset status after 2 seconds
-            Timer timer = new Timer(2000, e -> statusLabel.setText(originalText));
-            timer.setRepeats(false);
-            timer.start();
-        }
-    }
-
-    public void clearPreview() {
-        codePreviewField.setText("");
-        copyButton.setEnabled(false);
-        statusLabel.setText("Preview cleared");
-    }
-
-    public boolean hasContent() {
-        String text = codePreviewField.getText();
-        return !text.trim().isEmpty();
-    }
 
     private EditorTextField createCodeEditor() {
         Document document = EditorFactory.getInstance().createDocument("");
@@ -166,5 +87,18 @@ public class PreviewPanel extends JPanel {
         });
 
         return editor;
+    }
+
+    @Override
+    public void dispose() {
+        contextService.removeContextUpdateListener(this);
+    }
+
+    @Override
+    public void onContextUpdated(String newContent, String status) {
+        SwingUtilities.invokeLater(() -> {
+            codePreviewField.getDocument().setText(newContent);
+            statusLabel.setText(status);
+        });
     }
 }

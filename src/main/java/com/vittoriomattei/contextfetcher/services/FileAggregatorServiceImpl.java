@@ -1,9 +1,9 @@
 package com.vittoriomattei.contextfetcher.services;
 
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.Service.Level;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.vittoriomattei.contextfetcher.model.FileContextItem;
 import com.vittoriomattei.contextfetcher.model.FileEntry;
 import com.vittoriomattei.contextfetcher.model.LineRange;
 import org.jetbrains.annotations.NotNull;
@@ -149,6 +149,13 @@ public final class FileAggregatorServiceImpl implements FileAggregatorService {
     }
 
     @Override
+    public int getSnippetCount() {
+        return fileEntries.values().stream()
+                .mapToInt(entry -> entry.getSnippets().size())
+                .sum();
+    }
+
+    @Override
     public void clear() {
         if (!fileEntries.isEmpty()) {
             fileEntries.clear();
@@ -172,6 +179,17 @@ public final class FileAggregatorServiceImpl implements FileAggregatorService {
                 listener.onFilesChanged();
             } catch (Exception e) {
                 LOG.error("Error notifying file change listener", e);
+            }
+        }
+    }
+
+    public void removeFiles(@NotNull List<FileContextItem> selectedItems) {
+        for (FileContextItem item : selectedItems) {
+            if (item.isSnippet()) {
+                assert item.getLineRange() != null;
+                removeSnippet(item.getVirtualFile(), item.getLineRange());
+            } else {
+                removeFile(item.getVirtualFile());
             }
         }
     }

@@ -1,12 +1,11 @@
 package com.vittoriomattei.contextfetcher.services;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.vittoriomattei.contextfetcher.model.FileContextItem;
 import com.vittoriomattei.contextfetcher.model.FileEntry;
 import com.vittoriomattei.contextfetcher.model.LineRange;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,6 +64,8 @@ public interface FileAggregatorService {
      */
     int getFileCount();
 
+    int getSnippetCount();
+
     /**
      * Clears all files and snippets
      */
@@ -73,4 +74,5 @@ public interface FileAggregatorService {
     // Event handling
     void addChangeListener(@NotNull FilesChangeListener listener);
     void removeChangeListener(@NotNull FilesChangeListener listener);
+    void removeFiles(@NotNull List<FileContextItem> selectedItems);
 }

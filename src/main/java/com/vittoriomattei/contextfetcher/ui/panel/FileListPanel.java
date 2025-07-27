@@ -106,4 +106,8 @@ public class FileListPanel extends JPanel {
             }
         }
     }
+
+    public JBList<FileContextItem> getFileList() {
+        return fileList;
+    }
 }

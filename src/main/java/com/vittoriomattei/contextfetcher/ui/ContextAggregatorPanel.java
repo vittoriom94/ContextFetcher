@@ -1,17 +1,25 @@
 package com.vittoriomattei.contextfetcher.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBSplitter;
 import com.vittoriomattei.contextfetcher.model.FileContextItem;
 import com.vittoriomattei.contextfetcher.model.FileEntry;
+import com.vittoriomattei.contextfetcher.services.ContextGeneratorService;
 import com.vittoriomattei.contextfetcher.services.FileAggregatorService;
 import com.vittoriomattei.contextfetcher.services.FilesChangeListener;
 import com.vittoriomattei.contextfetcher.model.LineRange;
 import com.vittoriomattei.contextfetcher.ui.panel.FileListPanel;
 import com.vittoriomattei.contextfetcher.ui.panel.PreviewPanel;
 import com.vittoriomattei.contextfetcher.ui.panel.ToolbarPanel;
+import com.vittoriomattei.contextfetcher.util.DataKeys;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,10 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class ContextAggregatorPanel extends JPanel implements Disposable {
+public class ContextAggregatorPanel extends JPanel implements Disposable, DataProvider {
 
     private final Project project;
     private final FileAggregatorService fileService;
+    private final ContextGeneratorService contextService;
 
     // UI Components
     private final ToolbarPanel toolbarPanel;
@@ -32,10 +41,11 @@ public class ContextAggregatorPanel extends JPanel implements Disposable {
     // Data and listeners
     private final FilesChangeListener filesChangeListener = this::refreshFileList;
 
-    public ContextAggregatorPanel(Project project, FileAggregatorService fileService) {
+    public ContextAggregatorPanel(Project project, FileAggregatorService fileService, ContextGeneratorService contextService) {
         super(new BorderLayout());
         this.project = project;
         this.fileService = fileService;
+        this.contextService = contextService;
 
         // Initialize UI components
         this.toolbarPanel = new ToolbarPanel(project, fileService);
@@ -45,7 +55,7 @@ public class ContextAggregatorPanel extends JPanel implements Disposable {
                 this::handleJumpToSource,
                 this::handleRemoveItem
         );
-        this.previewPanel = new PreviewPanel(project, fileService);
+        this.previewPanel = new PreviewPanel(project, this.contextService);
 
         setupComponents();
         layoutComponents();
@@ -58,22 +68,20 @@ public class ContextAggregatorPanel extends JPanel implements Disposable {
     private void setupComponents() {
         // Set up toolbar panel callback
         toolbarPanel.setContextGenerationListener(previewPanel::generateContext);
-        toolbarPanel.setRemoveFilesListener(fileListPanel::removeFiles);
 
         // Configure file list panel
-        fileListPanel.setBorder(BorderFactory.createTitledBorder("Context Files"));
+        fileListPanel.setBorder(IdeBorderFactory.createTitledBorder("Context Files"));
 
         // Configure preview panel
-        previewPanel.setBorder(BorderFactory.createTitledBorder("Generated Context"));
+        previewPanel.setBorder(IdeBorderFactory.createTitledBorder("Generated Context"));
     }
 
     private void layoutComponents() {
         // Create main content area with split pane
-        JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        mainSplitPane.setTopComponent(fileListPanel);
-        mainSplitPane.setBottomComponent(previewPanel);
-        mainSplitPane.setDividerLocation(300); // Initial size
-        mainSplitPane.setResizeWeight(0.6); // Give more space to file list initially
+        JBSplitter mainSplitPane = new JBSplitter(true);
+        mainSplitPane.setFirstComponent(fileListPanel);
+        mainSplitPane.setSecondComponent(previewPanel);
+        mainSplitPane.setProportion(0.6f);
 
         // Layout main panel
         add(toolbarPanel, BorderLayout.NORTH);
@@ -140,5 +148,13 @@ public class ContextAggregatorPanel extends JPanel implements Disposable {
     @Override
     public void dispose() {
         fileService.removeChangeListener(filesChangeListener);
+    }
+
+    @Override
+    public @Nullable Object getData(@NotNull @NonNls String dataId) {
+        if (DataKeys.SELECTED_FILES_KEY.is(dataId)) {
+            return fileListPanel.getFileList();
+        }
+        return null;
     }
 }

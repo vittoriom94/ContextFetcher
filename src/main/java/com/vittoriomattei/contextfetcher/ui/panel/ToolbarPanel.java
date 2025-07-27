@@ -1,5 +1,8 @@
 package com.vittoriomattei.contextfetcher.ui.panel;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
@@ -11,7 +14,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBUI;
-import com.vittoriomattei.contextfetcher.model.FileContextItem;
 import com.vittoriomattei.contextfetcher.services.FileAggregatorService;
 
 import javax.swing.*;
@@ -29,48 +31,43 @@ public class ToolbarPanel extends JPanel {
     private final FileAggregatorService fileService;
 
     private final JButton addRecentFileButton = new JButton("Add Recent File");
-    private final JButton addOpenFilesButton = new JButton("Add Open Files");
     private final JButton clearAllButton = new JButton("Clear All");
     private final JButton generateContextButton = new JButton("Generate Context");
-    private final JButton removeSelectedButton = new JButton("Remove Selected");
 
     public interface ContextGenerationListener {
         void onContextGenerated();
     }
 
-    public interface RemoveFilesListener {
-        void onRemoveFiles();
-    }
-
     private ContextGenerationListener contextGenerationListener;
-    private RemoveFilesListener removeFilesListener;
 
     public ToolbarPanel(Project project, FileAggregatorService fileService) {
+        super(new BorderLayout());
         this.project = project;
         this.fileService = fileService;
 
-        setLayout(new GridBagLayout());
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        setupButtons();
-        setupListeners();
-        layoutButtons();
+//        setLayout(new GridBagLayout());
+//        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+//        setupButtons();
+//        setupListeners();
+//        layoutButtons();
+
+
+        ActionManager actionManager = ActionManager.getInstance();
+        ActionGroup actionGroup = (ActionGroup) actionManager.getAction("ContextFetcher.ToolbarActions");
+        ActionToolbar actionToolbar = actionManager.createActionToolbar("ContextFetcherToolbar", actionGroup, true);
+        actionToolbar.setTargetComponent(this);
+        add(actionToolbar.getComponent(), BorderLayout.WEST);
     }
 
     public void setContextGenerationListener(ContextGenerationListener listener) {
         this.contextGenerationListener = listener;
     }
 
-    public void setRemoveFilesListener(RemoveFilesListener listener) {
-        this.removeFilesListener = listener;
-    }
-
     private void setupButtons() {
         Dimension buttonSize = new Dimension(140, 30);
         addRecentFileButton.setPreferredSize(buttonSize);
-        addOpenFilesButton.setPreferredSize(buttonSize);
         clearAllButton.setPreferredSize(buttonSize);
         generateContextButton.setPreferredSize(buttonSize);
-        removeSelectedButton.setPreferredSize(buttonSize);
 
         // Make the generate button more prominent
         generateContextButton.setFont(generateContextButton.getFont().deriveFont(Font.BOLD));
@@ -78,10 +75,8 @@ public class ToolbarPanel extends JPanel {
 
     private void setupListeners() {
         addRecentFileButton.addActionListener(this::handleAddRecentFile);
-        addOpenFilesButton.addActionListener(this::handleAddOpenFiles);
         clearAllButton.addActionListener(this::handleClearAll);
         generateContextButton.addActionListener(this::handleGenerateContext);
-        removeSelectedButton.addActionListener(this::handleRemoveSelected);
     }
 
     private void layoutButtons() {
@@ -94,28 +89,18 @@ public class ToolbarPanel extends JPanel {
         gbc.gridx = 0;
         add(addRecentFileButton, gbc);
 
-        gbc.gridx = 1;
-        add(addOpenFilesButton, gbc);
 
         // Second row - Action buttons
         gbc.gridy = 1;
         gbc.gridx = 0;
         add(clearAllButton, gbc);
 
-        gbc.gridx = 1;
-        add(removeSelectedButton, gbc);
 
-        gbc.gridx = 2;
+        gbc.gridx = 1;
 
         add(generateContextButton, gbc);
     }
 
-    private void handleRemoveSelected(ActionEvent e) {
-
-        if (removeFilesListener != null) {
-            removeFilesListener.onRemoveFiles();
-        }
-    }
 
     private void handleAddRecentFile(ActionEvent e) {
         List<VirtualFile> recentFiles = Arrays.asList(
@@ -128,20 +113,6 @@ public class ToolbarPanel extends JPanel {
         }
 
         showFileSelectionPopup(recentFiles);
-    }
-
-    private void handleAddOpenFiles(ActionEvent e) {
-        VirtualFile[] files = FileEditorManager.getInstance(project).getOpenFiles();
-
-        if (files.length == 0) {
-            Messages.showErrorDialog(project, "No files are open.", "ContextFetcher");
-            return;
-        }
-
-        List<VirtualFile> fileList = Arrays.asList(files);
-        fileService.addFiles(fileList);
-
-        Messages.showInfoMessage(project, "Added " + files.length + " open file(s).", "ContextFetcher");
     }
 
     private void handleClearAll(ActionEvent e) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.vittoriomattei.contextfetcher.services.ContextGeneratorService;
 import com.vittoriomattei.contextfetcher.services.FileAggregatorService;
 
 public class ContextAggregatorToolWindowFactory implements ToolWindowFactory {
@@ -12,7 +13,8 @@ public class ContextAggregatorToolWindowFactory implements ToolWindowFactory {
     @Override
     public void createToolWindowContent(Project project, ToolWindow toolWindow) {
         FileAggregatorService fileService = project.getService(FileAggregatorService.class);
-        ContextAggregatorPanel panel = new ContextAggregatorPanel(project, fileService);
+        ContextGeneratorService contextService = project.getService(ContextGeneratorService.class);
+        ContextAggregatorPanel panel = new ContextAggregatorPanel(project, fileService, contextService);
 
         ContentFactory contentFactory = ContentFactory.getInstance();
         Content content = contentFactory.createContent(panel, "", false);
