@@ -34,33 +34,17 @@ public class ToolbarPanel extends JPanel {
     private final JButton clearAllButton = new JButton("Clear All");
     private final JButton generateContextButton = new JButton("Generate Context");
 
-    public interface ContextGenerationListener {
-        void onContextGenerated();
-    }
-
-    private ContextGenerationListener contextGenerationListener;
-
     public ToolbarPanel(Project project, FileAggregatorService fileService) {
         super(new BorderLayout());
         this.project = project;
         this.fileService = fileService;
 
-//        setLayout(new GridBagLayout());
-//        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-//        setupButtons();
-//        setupListeners();
-//        layoutButtons();
-
 
         ActionManager actionManager = ActionManager.getInstance();
-        ActionGroup actionGroup = (ActionGroup) actionManager.getAction("ContextFetcher.ToolbarActions");
+        ActionGroup actionGroup = (ActionGroup) actionManager.getAction("ContextFetcher.MainToolbarGroup");
         ActionToolbar actionToolbar = actionManager.createActionToolbar("ContextFetcherToolbar", actionGroup, true);
         actionToolbar.setTargetComponent(this);
         add(actionToolbar.getComponent(), BorderLayout.WEST);
-    }
-
-    public void setContextGenerationListener(ContextGenerationListener listener) {
-        this.contextGenerationListener = listener;
     }
 
     private void setupButtons() {
@@ -71,34 +55,6 @@ public class ToolbarPanel extends JPanel {
 
         // Make the generate button more prominent
         generateContextButton.setFont(generateContextButton.getFont().deriveFont(Font.BOLD));
-    }
-
-    private void setupListeners() {
-        addRecentFileButton.addActionListener(this::handleAddRecentFile);
-        clearAllButton.addActionListener(this::handleClearAll);
-        generateContextButton.addActionListener(this::handleGenerateContext);
-    }
-
-    private void layoutButtons() {
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = JBUI.insets(3);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        // First row - Add buttons
-        gbc.gridy = 0;
-        gbc.gridx = 0;
-        add(addRecentFileButton, gbc);
-
-
-        // Second row - Action buttons
-        gbc.gridy = 1;
-        gbc.gridx = 0;
-        add(clearAllButton, gbc);
-
-
-        gbc.gridx = 1;
-
-        add(generateContextButton, gbc);
     }
 
 
@@ -129,11 +85,6 @@ public class ToolbarPanel extends JPanel {
         }
     }
 
-    private void handleGenerateContext(ActionEvent e) {
-        if (contextGenerationListener != null) {
-            contextGenerationListener.onContextGenerated();
-        }
-    }
 
     private void showFileSelectionPopup(List<VirtualFile> recentFiles) {
         // State: current filtered list

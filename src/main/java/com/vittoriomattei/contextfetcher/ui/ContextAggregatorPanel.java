@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBSplitter;
+import com.intellij.util.ui.JBUI;
 import com.vittoriomattei.contextfetcher.model.FileContextItem;
 import com.vittoriomattei.contextfetcher.model.FileEntry;
 import com.vittoriomattei.contextfetcher.services.ContextGeneratorService;
@@ -66,8 +67,6 @@ public class ContextAggregatorPanel extends JPanel implements Disposable, DataPr
     }
 
     private void setupComponents() {
-        // Set up toolbar panel callback
-        toolbarPanel.setContextGenerationListener(previewPanel::generateContext);
 
         // Configure file list panel
         fileListPanel.setBorder(IdeBorderFactory.createTitledBorder("Context Files"));
@@ -82,6 +81,7 @@ public class ContextAggregatorPanel extends JPanel implements Disposable, DataPr
         mainSplitPane.setFirstComponent(fileListPanel);
         mainSplitPane.setSecondComponent(previewPanel);
         mainSplitPane.setProportion(0.6f);
+        mainSplitPane.setBorder(IdeBorderFactory.createEmptyBorder(JBUI.insets(10)));
 
         // Layout main panel
         add(toolbarPanel, BorderLayout.NORTH);
@@ -137,11 +137,6 @@ public class ContextAggregatorPanel extends JPanel implements Disposable, DataPr
             }
 
             fileListPanel.setItems(items);
-
-            // Clear preview if no items
-            if (items.isEmpty()) {
-                previewPanel.clearPreview();
-            }
         });
     }
 
@@ -153,7 +148,7 @@ public class ContextAggregatorPanel extends JPanel implements Disposable, DataPr
     @Override
     public @Nullable Object getData(@NotNull @NonNls String dataId) {
         if (DataKeys.SELECTED_FILES_KEY.is(dataId)) {
-            return fileListPanel.getFileList();
+            return fileListPanel.getSelectedFileList();
         }
         return null;
     }

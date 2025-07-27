@@ -1,6 +1,12 @@
 package com.vittoriomattei.contextfetcher.services;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.vittoriomattei.contextfetcher.listeners.ContextUpdateListener;
@@ -19,13 +25,12 @@ import java.util.stream.Collectors;
 
 public class ContextGeneratorService{
 
-    private List<FileEntry> files;
     private String currentContext = "";
     private String status = "";
 
     private final CopyOnWriteArrayList<ContextUpdateListener> contextUpdateListeners = new CopyOnWriteArrayList<>();
 
-    public String generateContext() {
+    public String generateContext(List<FileEntry> files) {
         StringBuilder context = new StringBuilder();
         context.append("# --- Code context ---\n\n");
 
@@ -40,7 +45,7 @@ public class ContextGeneratorService{
             String content = ReadAction.compute(
                     () -> {
                         try {
-                            return VfsUtil.loadText(file.getVirtualFile());
+                            return StringUtil.convertLineSeparators(VfsUtil.loadText(file.getVirtualFile()));
                         } catch (IOException e) {
                             System.err.println("Error reading string content with streams: " + e.getMessage());
                             return " ... file content could not be loaded ...\n\n";
@@ -50,12 +55,14 @@ public class ContextGeneratorService{
 
 
             Set<LineRange> snippets = file.getSnippets();
+            var fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getVirtualFile().getName()));
+            String extension = fileType != UnknownFileType.INSTANCE ? fileType.getName().toLowerCase() : "";
             if (snippets.isEmpty()) {
-                context.append("```\n").append(content).append("\n```\n\n");
+                context.append("```").append(extension).append("\n").append(content).append("\n```\n\n");
                 filesCount++;
             } else {
                 for (LineRange snippet : snippets) {
-                    context.append("### L").append(snippet.startLine()).append("-").append(snippet.endLine()).append("\n```\n");
+                    context.append("### L").append(snippet.startLine()).append("-").append(snippet.endLine()).append("\n```").append(extension).append("\n");
                     context.append(getSnippet(content, snippet.startLine(), snippet.endLine()));
                     context.append("\n```\n\n");
                     snippetsCount++;
@@ -66,13 +73,15 @@ public class ContextGeneratorService{
 
         context.append("# End of code context\n\n");
 
-        String status = String.format("Context generated: %d file(s)", files.size());
+        String status = String.format("Context generated: %d file(s)", filesCount);
         if (snippetsCount > 0) {
             status += String.format(", %d snippet(s)", snippetsCount);
         }
 
+        currentContext = context.toString();
+        this.status = status;
         notifyContextUpdateListeners(context.toString(), status);
-        return context.toString();
+        return currentContext;
     }
 
     private String getSnippet(String fileContent, int lineStart, int lineEnd) {

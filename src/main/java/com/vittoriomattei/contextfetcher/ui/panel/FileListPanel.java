@@ -110,4 +110,8 @@ public class FileListPanel extends JPanel {
     public JBList<FileContextItem> getFileList() {
         return fileList;
     }
+
+    public List<FileContextItem> getSelectedFileList() {
+        return fileList.getSelectedValuesList();
+    }
 }
