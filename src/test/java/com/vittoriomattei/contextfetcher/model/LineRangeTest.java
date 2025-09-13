@@ -28,7 +28,7 @@ public class LineRangeTest {
     @Test
     public void testToString() {
         LineRange range = new LineRange(5, 15);
-        assertEquals("6 - 16", range.toString());
+        assertEquals("5 - 15", range.toString());
     }
 
     @Test

@@ -79,8 +79,8 @@ public class ContextGeneratorServiceTest extends FileAggregatorTestBase {
         String context = generator.generateContext(files);
 
         Assert.assertNotNull(context);
-        Assert.assertTrue(context.contains("### L2-4"));
-        Assert.assertTrue(context.contains("### L9-11"));
+        Assert.assertTrue(context.contains("### L3-5"));
+        Assert.assertTrue(context.contains("### L10-12"));
         Assert.assertTrue(context.contains("public class Example"));
         Assert.assertTrue(context.contains("public String getName()"));
 
@@ -97,7 +97,7 @@ public class ContextGeneratorServiceTest extends FileAggregatorTestBase {
         ContextGeneratorService generator = new ContextGeneratorService();
         String context = generator.generateContext(files);
 
-        Assert.assertTrue(context.contains("### L0-2")); // Snippet format
+        Assert.assertTrue(context.contains("### L1-3")); // Snippet format
         Assert.assertTrue(context.contains("# Project Title")); // Complete file content
     }
 

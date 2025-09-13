@@ -51,7 +51,7 @@ public class FullWorkflowIntegrationTest extends FileAggregatorTestBase {
     @Test
     public void testCompleteWorkflow() {
         // 1. Add snippet first, then more snippets (should work)
-        assertTrue(aggregatorService.addSnippet(javaFile, new LineRange(4, 6))); // Just method1
+        assertTrue(aggregatorService.addSnippet(javaFile, new LineRange(3, 5))); // Just method1
         assertTrue(aggregatorService.addFile(configFile)); // Complete file
 
         assertEquals(2, aggregatorService.getFileCount());
@@ -73,7 +73,7 @@ public class FullWorkflowIntegrationTest extends FileAggregatorTestBase {
         assertFalse(context.contains("method2")); // Should not include method2
 
         // 4. Add another snippet from same file - this should work
-        assertTrue(aggregatorService.addSnippet(javaFile, new LineRange(8, 10))); // Add method2
+        assertTrue(aggregatorService.addSnippet(javaFile, new LineRange(7, 9))); // Add method2
 
         // Should still have 2 distinct files (config file + java file with 2 snippets)
         assertEquals(2, aggregatorService.getFileCount());

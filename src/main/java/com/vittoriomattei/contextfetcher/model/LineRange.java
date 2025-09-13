@@ -5,6 +5,6 @@ import org.jetbrains.annotations.NotNull;
 public record LineRange(int startLine, int endLine) {
     @Override
     public @NotNull String toString() {
-        return (startLine + 1) + " - " + (endLine + 1);
+        return startLine + " - " + endLine;
     }
 }

@@ -62,7 +62,7 @@ public class ContextGeneratorService{
                 if (item.isSnippet()) {
                     LineRange lineRange = item.getLineRange();
                     context.append("### L").append(lineRange.startLine() + 1).append("-").append(lineRange.endLine() + 1).append("\n```").append(extension).append("\n");
-                    context.append(getSnippet(content, lineRange.startLine() + 1, lineRange.endLine() + 1));
+                    context.append(getSnippet(content, lineRange.startLine(), lineRange.endLine()));
                     context.append("\n```\n\n");
                     snippetsCount++;
                 } else {
@@ -101,7 +101,7 @@ public class ContextGeneratorService{
 
         try (BufferedReader reader = new BufferedReader(new StringReader(fileContent))) {
             return reader.lines() // Get a Stream of lines
-                    .skip(lineStart - 1) // Skip lines before the start (convert from 1-based to 0-based)
+                    .skip(lineStart) // Skip lines before the start
                     .limit(lineEnd - lineStart + 1) // Take the desired number of lines
                     .collect(Collectors.joining("\n")); // Join them with newlines
         } catch (IOException e) {

@@ -103,6 +103,6 @@ public class FileContextItemTest {
 
         assertTrue(snippetStr.contains("TestFile1.java"));
         assertTrue(snippetStr.contains("isSnippet=true"));
-        assertTrue(snippetStr.contains("LineRange{startLine=1, endLine=5}"));
+        assertTrue(snippetStr.contains("lineRange=1 - 5"));
     }
 }
