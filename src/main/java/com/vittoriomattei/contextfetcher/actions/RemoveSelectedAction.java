@@ -9,6 +9,7 @@ import com.vittoriomattei.contextfetcher.services.FileAggregatorService;
 import com.vittoriomattei.contextfetcher.util.DataKeys;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RemoveSelectedAction extends AnAction {
@@ -30,7 +31,6 @@ public class RemoveSelectedAction extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-        // Automatically enable/disable the button
         List<FileContextItem> selectedItems = e.getData(DataKeys.SELECTED_FILES_KEY);
         boolean isEnabled = selectedItems != null && !selectedItems.isEmpty();
         e.getPresentation().setEnabled(isEnabled);

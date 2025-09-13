@@ -4,20 +4,20 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.vittoriomattei.contextfetcher.model.FileContextItem;
-import com.vittoriomattei.contextfetcher.model.FileEntry;
 import com.vittoriomattei.contextfetcher.model.LineRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 @Service(Service.Level.PROJECT)
 public final class FileAggregatorServiceImpl implements FileAggregatorService {
 
     private static final Logger LOG = Logger.getInstance(FileAggregatorServiceImpl.class);
 
-    private final ConcurrentHashMap<VirtualFile, FileEntry> fileEntries = new ConcurrentHashMap<>();
+    private final Set<FileContextItem> items = ConcurrentHashMap.newKeySet();
     private final CopyOnWriteArrayList<FilesChangeListener> listeners = new CopyOnWriteArrayList<>();
 
     @Override
@@ -29,15 +29,22 @@ public final class FileAggregatorServiceImpl implements FileAggregatorService {
             return false;
         }
 
-        FileEntry newEntry = FileEntry.completeFile(file);
-        FileEntry existing = fileEntries.putIfAbsent(file, newEntry);
+        // Check if file already exists in any form (whole file or snippets)
+        boolean fileExists = items.stream()
+                .anyMatch(item -> item.getVirtualFile().equals(file));
 
-        if (existing == null) {
-            notifyListeners();
-            return true;
+        if (fileExists) {
+            return false; // File already tracked in some form
         }
 
-        return false;
+        FileContextItem wholeFileItem = FileContextItem.wholeFile(file);
+        boolean added = items.add(wholeFileItem);
+
+        if (added) {
+            notifyListeners();
+        }
+
+        return added;
     }
 
     @Override
@@ -49,10 +56,16 @@ public final class FileAggregatorServiceImpl implements FileAggregatorService {
 
         for (VirtualFile file : files) {
             if (file != null && file.isValid()) {
-                FileEntry newEntry = FileEntry.completeFile(file);
-                if (fileEntries.putIfAbsent(file, newEntry) == null) {
-                    addedCount++;
-                    anyAdded = true;
+                // Check if file already exists
+                boolean fileExists = items.stream()
+                        .anyMatch(item -> item.getVirtualFile().equals(file));
+                
+                if (!fileExists) {
+                    FileContextItem wholeFileItem = FileContextItem.wholeFile(file);
+                    if (items.add(wholeFileItem)) {
+                        addedCount++;
+                        anyAdded = true;
+                    }
                 }
             }
         }
@@ -79,41 +92,50 @@ public final class FileAggregatorServiceImpl implements FileAggregatorService {
             return false;
         }
 
-        FileEntry updatedEntry = fileEntries.compute(file, (k, existing) -> {
-            if (existing == null) {
-                return FileEntry.withSnippets(file, Set.of(lineRange));
-            }
+        // Check if whole file is already tracked
+        boolean wholeFileExists = items.stream()
+                .anyMatch(item -> item.getVirtualFile().equals(file) && !item.isSnippet());
 
-            // Check if snippet already exists
-            if (existing.getSnippets().contains(lineRange)) {
-                return existing; // No change
-            }
+        if (wholeFileExists) {
+            return false; // Cannot add snippet when whole file is already tracked
+        }
 
-            return existing.addSnippet(lineRange);
-        });
+        // Check if this exact snippet already exists
+        FileContextItem newSnippet = FileContextItem.snippet(file, lineRange);
+        if (items.contains(newSnippet)) {
+            return false; // This exact snippet already exists
+        }
 
-        notifyListeners();
-        return true;
+        // File doesn't exist, add as snippet
+        FileContextItem snippetItem = FileContextItem.snippet(file, lineRange);
+        boolean added = items.add(snippetItem);
+        
+        if (added) {
+            notifyListeners();
+        }
+        
+        return added;
     }
 
     @Override
-    public @NotNull List<FileEntry> getFileEntries() {
-        return new ArrayList<>(fileEntries.values());
+    public @NotNull List<FileContextItem> getAllItems() {
+        return new ArrayList<>(items);
     }
 
     @Override
-    public @NotNull Optional<FileEntry> getFileEntry(@NotNull VirtualFile file) {
-        return Optional.ofNullable(fileEntries.get(file));
+    public @NotNull List<FileContextItem> getItemsForFile(@NotNull VirtualFile file) {
+        return items.stream()
+                .filter(item -> item.getVirtualFile().equals(file))
+                .collect(Collectors.toList());
     }
 
     @Override
     public boolean removeFile(@NotNull VirtualFile file) {
-        FileEntry removed = fileEntries.remove(file);
-        if (removed != null) {
+        boolean removed = items.removeIf(item -> item.getVirtualFile().equals(file));
+        if (removed) {
             notifyListeners();
-            return true;
         }
-        return false;
+        return removed;
     }
 
     @Override
@@ -121,44 +143,40 @@ public final class FileAggregatorServiceImpl implements FileAggregatorService {
         Objects.requireNonNull(file, "File cannot be null");
         Objects.requireNonNull(lineRange, "LineRange cannot be null");
 
-        boolean[] changed = {false};
+        FileContextItem snippetToRemove = FileContextItem.snippet(file, lineRange);
+        boolean removed = items.remove(snippetToRemove);
 
-        fileEntries.computeIfPresent(file, (k, existing) -> {
-            FileEntry updated = existing.removeSnippet(lineRange);
-            if (updated != existing) {
-                changed[0] = true;
-            }
-            return updated; // null if entry should be removed entirely
-        });
-
-        if (changed[0]) {
+        if (removed) {
             notifyListeners();
         }
 
-        return changed[0];
+        return removed;
     }
 
     @Override
     public boolean containsFile(@NotNull VirtualFile file) {
-        return fileEntries.containsKey(file);
+        return items.stream().anyMatch(item -> item.getVirtualFile().equals(file));
     }
 
     @Override
     public int getFileCount() {
-        return fileEntries.size();
+        return (int) items.stream()
+                .map(FileContextItem::getVirtualFile)
+                .distinct()
+                .count();
     }
 
     @Override
     public int getSnippetCount() {
-        return fileEntries.values().stream()
-                .mapToInt(entry -> entry.getSnippets().size())
-                .sum();
+        return (int) items.stream()
+                .filter(FileContextItem::isSnippet)
+                .count();
     }
 
     @Override
     public void clear() {
-        if (!fileEntries.isEmpty()) {
-            fileEntries.clear();
+        if (!items.isEmpty()) {
+            items.clear();
             notifyListeners();
         }
     }
@@ -184,13 +202,19 @@ public final class FileAggregatorServiceImpl implements FileAggregatorService {
     }
 
     public void removeFiles(@NotNull List<FileContextItem> selectedItems) {
+        boolean anyRemoved = false;
         for (FileContextItem item : selectedItems) {
-            if (item.isSnippet()) {
-                assert item.getLineRange() != null;
-                removeSnippet(item.getVirtualFile(), item.getLineRange());
-            } else {
-                removeFile(item.getVirtualFile());
+            if (items.remove(item)) {
+                anyRemoved = true;
             }
         }
+        if (anyRemoved) {
+            notifyListeners();
+        }
+    }
+
+    @Override
+    public List<FileContextItem> getSortedItems() {
+        return items.stream().sorted().collect(Collectors.toList());
     }
 }

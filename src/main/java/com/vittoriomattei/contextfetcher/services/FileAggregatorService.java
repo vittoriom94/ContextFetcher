@@ -2,7 +2,6 @@ package com.vittoriomattei.contextfetcher.services;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.vittoriomattei.contextfetcher.model.FileContextItem;
-import com.vittoriomattei.contextfetcher.model.FileEntry;
 import com.vittoriomattei.contextfetcher.model.LineRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,14 +34,14 @@ public interface FileAggregatorService {
     boolean addSnippet(@NotNull VirtualFile file, @NotNull LineRange lineRange);
 
     /**
-     * Gets all file entries
+     * Gets all file context items
      */
-    @NotNull List<FileEntry> getFileEntries();
+    @NotNull List<FileContextItem> getAllItems();
 
     /**
-     * Gets a specific file entry
+     * Gets all file context items for a specific file
      */
-    @NotNull Optional<FileEntry> getFileEntry(@NotNull VirtualFile file);
+    @NotNull List<FileContextItem> getItemsForFile(@NotNull VirtualFile file);
 
     /**
      * Removes a file entirely
@@ -71,8 +70,9 @@ public interface FileAggregatorService {
      */
     void clear();
 
-    // Event handling
     void addChangeListener(@NotNull FilesChangeListener listener);
     void removeChangeListener(@NotNull FilesChangeListener listener);
     void removeFiles(@NotNull List<FileContextItem> selectedItems);
+
+    List<FileContextItem> getSortedItems();
 }

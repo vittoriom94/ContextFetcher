@@ -1,39 +1,43 @@
 package com.vittoriomattei.contextfetcher.model;
 
+import com.google.common.collect.Comparators;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FileContextItem {
-    private final VirtualFile virtualFile;
-    private final @Nullable LineRange lineRange;
+import java.io.File;
+import java.util.Comparator;
 
-    public FileContextItem(VirtualFile virtualFile, @Nullable LineRange lineRange) {
+public class FileContextItem implements Comparable<FileContextItem> {
+    private final VirtualFile virtualFile;
+    private final LineRange lineRange;
+    private final boolean isSnippet;
+
+    public FileContextItem(VirtualFile virtualFile, LineRange lineRange, boolean isSnippet){
         this.virtualFile = virtualFile;
         this.lineRange = lineRange;
+        this.isSnippet = isSnippet;
+    }
+
+    // Factory methods for clarity
+    public static FileContextItem wholeFile(VirtualFile virtualFile) {
+        return new FileContextItem(virtualFile, new LineRange(0, -1), false);
+    }
+
+    public static FileContextItem snippet(VirtualFile virtualFile, LineRange lineRange) {
+        return new FileContextItem(virtualFile, lineRange, true);
     }
 
     public VirtualFile getVirtualFile() {
         return virtualFile;
     }
 
-    public @Nullable LineRange getLineRange() {
+    public LineRange getLineRange() {
         return lineRange;
     }
 
     public boolean isSnippet() {
-        return lineRange != null;
-    }
-
-    public String getDisplayName() {
-        if (isSnippet()) {
-            assert lineRange != null;
-            return virtualFile.getName() + " [" + lineRange.startLine() + "–" + lineRange.endLine() + "]";
-        }
-        return virtualFile.getName();
-    }
-
-    public String getFullPath() {
-        return virtualFile.getPath();
+        return isSnippet;
     }
 
     public String getPresentableName() {
@@ -47,14 +51,16 @@ public class FileContextItem {
 
         FileContextItem that = (FileContextItem) obj;
 
+        if (isSnippet != that.isSnippet) return false;
         if (!virtualFile.equals(that.virtualFile)) return false;
-        return lineRange != null ? lineRange.equals(that.lineRange) : that.lineRange == null;
+        return lineRange.equals(that.lineRange);
     }
 
     @Override
     public int hashCode() {
         int result = virtualFile.hashCode();
-        result = 31 * result + (lineRange != null ? lineRange.hashCode() : 0);
+        result = 31 * result + lineRange.hashCode();
+        result = 31 * result + (isSnippet ? 1 : 0);
         return result;
     }
 
@@ -63,6 +69,32 @@ public class FileContextItem {
         return "FileContextItem{" +
                 "file=" + virtualFile.getName() +
                 ", lineRange=" + lineRange +
+                ", isSnippet=" + isSnippet +
                 '}';
     }
+
+    @Override
+    public int compareTo(@NotNull FileContextItem other) {
+        if (this == other) {
+            return 0;
+        }
+        int fileComparison = this.virtualFile.getName().compareTo(other.virtualFile.getName());
+        if (fileComparison != 0 || (!this.isSnippet && !other.isSnippet)) {
+            return fileComparison;
+        }
+        if (!this.isSnippet && other.isSnippet) {
+            return -1;
+        } else if (this.isSnippet && !other.isSnippet) {
+            return 1;
+        }
+
+        // both are snippets, compare the start lines, if they're the same use the end lines
+        int startComparison = Integer.compare(this.lineRange.startLine(), other.lineRange.startLine());
+        if (startComparison != 0) {
+            return startComparison;
+        }
+        return Integer.compare(this.lineRange.endLine(), other.lineRange.endLine());
+
+    }
+
 }

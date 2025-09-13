@@ -41,7 +41,5 @@ public class AddSelectionAction extends AnAction {
         }
         LineRange lineRange = new LineRange(startLine, endLine);
         service.addSnippet(file, lineRange);
-
-        Messages.showInfoMessage(project, "Added current file: " + file.getName(), "ContextFetcher");
     }
 }

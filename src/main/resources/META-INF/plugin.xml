@@ -28,7 +28,7 @@
         <toolWindow
                 id="ContextAggregator"
                 anchor="right"
-                factoryClass="com.vittoriomattei.contextfetcher.ui.ContextAggregatorToolWindowFactory"/>
+                factoryClass="com.vittoriomattei.contextfetcher.ui.ContextFetcherToolWindowFactory"/>
 
 
         <!-- Project Service for File Management -->
@@ -42,10 +42,10 @@
 
     </extensions>
     <actions>
-        <action id="ContextAggregator.AddCurrentFile"
-                class="com.vittoriomattei.contextfetcher.actions.AddCurrentFileAction"
-                text="Add Current File to Context"
-                description="Add the currently open file to context"
+        <action id="ContextAggregator.AddFile"
+                class="com.vittoriomattei.contextfetcher.actions.AddFileAction"
+                text="Add File to Context"
+                description="Add the currently selected file or directory to context"
                 icon="AllIcons.Actions.AddFile"/>
 
         <action id="ContextAggregator.AddOpenFiles"
@@ -58,12 +58,6 @@
                 class="com.vittoriomattei.contextfetcher.actions.AddSelectionAction"
                 text="Add Selection to Context"
                 description="Adds selected lines or the current line to a custom context."/>
-
-        <action id="ContextAggregator.AddDirectory"
-                class="com.vittoriomattei.contextfetcher.actions.AddDirectoryAction"
-                text="Add Selected Directory"
-                description="Add all files in the selected directory to the context"
-                icon="AllIcons.Actions.AddDirectory"/>
 
         <action id="ContextAggregator.GenerateContextOutput"
                 class="com.vittoriomattei.contextfetcher.actions.GenerateContextAction"
@@ -100,39 +94,27 @@
                 description="Copies the generated context text to the clipboard"
                 icon="AllIcons.Actions.Copy"/>
 
-        <action id="ContextAggregator.JumpToSource"
-                class="com.vittoriomattei.contextfetcher.actions.JumpToSourceAction"
-                text="Jump To Source"
-                description="Jumps to the source of the selected file/snippet"/>
 
-        <action id="ContextAggregator.RemoveFile"
-                class="com.vittoriomattei.contextfetcher.actions.RemoveFileAction"
-                text="Remove File"
-                description="Removes the selected file from context"
-                icon="AllIcons.General.Remove"/>
-
-
-        <group id="ContextAggregator.ToolsMenuSubGroup" text="Context Actions" popup="true">
-            <reference ref="ContextAggregator.AddCurrentFile"/>
+        <group id="ContextAggregator.ToolsMenuSubGroup" text="Context Fetcher" popup="true">
+            <reference ref="ContextAggregator.AddFile"/>
             <reference ref="ContextAggregator.AddOpenFiles"/>
             <reference ref="ContextAggregator.AddSelectionAction"/>
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </group>
 
-        <group id="ContextAggregator.EditorPopupSubGroup" text="Context Actions" popup="true">
-            <reference ref="ContextAggregator.AddCurrentFile"/>
+        <group id="ContextAggregator.EditorPopupSubGroup" text="Context Fetcher" popup="true">
+            <reference ref="ContextAggregator.AddFile"/>
             <reference ref="ContextAggregator.AddSelectionAction"/>
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </group>
 
         <group id="ContextAggregator.TabMenu" popup="false">
-            <reference ref="ContextAggregator.AddCurrentFile"/>
+            <reference ref="ContextAggregator.AddFile"/>
             <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
         </group>
 
         <group id="ContextAggregator.PaneMenu" popup="false">
-            <reference ref="ContextAggregator.AddCurrentFile"/>
-            <reference ref="ContextAggregator.AddDirectory"/>
+            <reference ref="ContextAggregator.AddFile"/>
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </group>
 
@@ -150,9 +132,5 @@
             <reference ref="ContextAggregator.CopyToClipboard"/>
         </group>
 
-        <group id="ContextAggregator.FileToolbar" text="File Actions" popup="false">
-            <reference ref="ContextAggregator.JumpToSource"/>
-            <reference ref="ContextAggregator.RemoveFile"/>
-        </group>
     </actions>
 </idea-plugin>

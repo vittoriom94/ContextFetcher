@@ -20,7 +20,7 @@ public class GenerateContextAction extends AnAction {
 
         var contextGeneratorService = project.getService(ContextGeneratorService.class);
         var fileAggregatorService = project.getService(FileAggregatorService.class);
-        contextGeneratorService.generateContext(fileAggregatorService.getFileEntries());
+        contextGeneratorService.generateContext(fileAggregatorService.getSortedItems());
     }
 
     @Override

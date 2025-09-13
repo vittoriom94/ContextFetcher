@@ -1,117 +1,83 @@
 package com.vittoriomattei.contextfetcher.ui.panel;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import com.vittoriomattei.contextfetcher.model.FileContextItem;
 import com.vittoriomattei.contextfetcher.services.FileAggregatorService;
+import com.vittoriomattei.contextfetcher.services.FilesChangeListener;
 import com.vittoriomattei.contextfetcher.ui.renderer.FileContextItemRenderer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
-public class FileListPanel extends JPanel {
+public class FileListPanel extends JPanel implements FilesChangeListener, Disposable {
+    private final JBList<FileContextItem> fileListComponent;
+    private final DefaultListModel<FileContextItem> fileListModel;
+    private final FileAggregatorService fileService;
 
-    private DefaultListModel<FileContextItem> listModel;
-    private JBList<FileContextItem> fileList;
-    private FileAggregatorService fileService;
-    private Consumer<FileContextItem> onJumpToSource;
-    private Consumer<FileContextItem> onRemoveItem;
-
-    public FileListPanel(
-            List<FileContextItem> items,
-            FileAggregatorService fileService,
-            Consumer<FileContextItem> onJumpToSource,
-            Consumer<FileContextItem> onRemoveItem
-    ) {
+    public FileListPanel(Project project, FileAggregatorService fileService) {
+        super(new BorderLayout());
         this.fileService = fileService;
-        this.onJumpToSource = onJumpToSource;
-        this.onRemoveItem = onRemoveItem;
 
-        this.listModel = new DefaultListModel<>();
-        items.forEach(listModel::addElement);
-
-        this.fileList = new JBList<>(listModel);
-        fileList.setCellRenderer(new FileContextItemRenderer());
-
-        setLayout(new BorderLayout());
-        add(new JBScrollPane(fileList), BorderLayout.CENTER);
-
-        setupClickHandler();
-    }
-
-
-    public void setItems(List<FileContextItem> items) {
-        listModel.clear();
-        for (FileContextItem item : items) {
-            listModel.addElement(item);
-        }
-    }
-
-
-    private void setupClickHandler() {
-        fileList.addMouseListener(new MouseAdapter() {
+        this.fileListModel = new DefaultListModel<>();
+        var fileList = fileService.getAllItems();
+        fileService.addChangeListener(this);
+        fileListModel.addAll(fileList);
+        this.fileListComponent = new JBList<>(fileListModel);
+        this.fileListComponent.setCellRenderer(new FileContextItemRenderer());
+        MouseListener doubleClickListener = new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                int index = fileList.locationToIndex(e.getPoint());
-                if (index < 0) return;
-
-                Rectangle cellBounds = fileList.getCellBounds(index, index);
-                if (cellBounds == null || !cellBounds.contains(e.getPoint())) return;
-
-                FileContextItem item = listModel.getElementAt(index);
-
-                // Calculate relative click position
-                int relativeX = e.getX() - cellBounds.x;
-                int cellWidth = cellBounds.width;
-
-                // Approximate button positions based on the renderer layout
-                // The icons are positioned on the right side of the cell
-                int iconAreaWidth = 40; // Space for both icons
-                int jumpIconStart = cellWidth - iconAreaWidth;
-                int removeIconStart = cellWidth - 20;
-
-                if (relativeX >= removeIconStart) {
-                    // Clicked on remove icon
-                    if (onRemoveItem != null) {
-                        onRemoveItem.accept(item);
+                if (e.getButton() == MouseEvent.BUTTON3) {
+                    int clickedComponent = fileListComponent.locationToIndex(e.getPoint());
+                    if (clickedComponent == -1) {
+                        return;
                     }
-                } else if (relativeX >= jumpIconStart) {
-                    // Clicked on jump icon
-                    if (onJumpToSource != null) {
-                        onJumpToSource.accept(item);
-                    }
-                } else if (e.getClickCount() == 2) {
-                    // Double-click on the item itself - jump to source
-                    if (onJumpToSource != null) {
-                        onJumpToSource.accept(item);
-                    }
+                    var clickedFile = fileListModel.getElementAt(clickedComponent);
+                    List<FileContextItem> fileToRemove = new ArrayList<>();
+                    fileToRemove.add(clickedFile);
+                    fileService.removeFiles(fileToRemove);
                 }
+                if (e.getClickCount() < 2) {
+                    return;
+                }
+                int clickedComponent = fileListComponent.locationToIndex(e.getPoint());
+                if (clickedComponent == -1) {
+                    return;
+                }
+                var clickedFile = fileListModel.getElementAt(clickedComponent);
+                var line = clickedFile.isSnippet() ? clickedFile.getLineRange().startLine() : -1;
+                OpenFileDescriptor ofd = new OpenFileDescriptor(project, clickedFile.getVirtualFile(), line, -1);
+                ofd.navigate(true);
             }
-        });
+        };
+        this.fileListComponent.addMouseListener(
+                doubleClickListener
+
+        );
+
+        add(this.fileListComponent);
     }
 
-
-    public void removeFiles() {
-        List<FileContextItem> selectedItems = fileList.getSelectedValuesList();
-        for (FileContextItem item : selectedItems) {
-            if (item.isSnippet()) {
-                assert item.getLineRange() != null;
-                fileService.removeSnippet(item.getVirtualFile(), item.getLineRange());
-            } else {
-                fileService.removeFile(item.getVirtualFile());
-            }
-        }
-    }
-
-    public JBList<FileContextItem> getFileList() {
-        return fileList;
+    @Override
+    public void onFilesChanged() {
+        this.fileListModel.clear();
+        this.fileListModel.addAll(this.fileService.getSortedItems());
     }
 
     public List<FileContextItem> getSelectedFileList() {
-        return fileList.getSelectedValuesList();
+        return this.fileListComponent.getSelectedValuesList();
+    }
+
+    @Override
+    public void dispose() {
+        this.fileService.removeChangeListener(this);
     }
 }

@@ -1,7 +1,7 @@
 package com.vittoriomattei.contextfetcher.services;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.vittoriomattei.contextfetcher.model.FileEntry;
+import com.vittoriomattei.contextfetcher.model.FileContextItem;
 import com.vittoriomattei.contextfetcher.model.LineRange;
 import com.vittoriomattei.contextfetcher.test.FileAggregatorTestBase;
 import org.junit.Assert;
@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 
 public class ContextGeneratorServiceTest extends FileAggregatorTestBase {
@@ -55,13 +54,12 @@ public class ContextGeneratorServiceTest extends FileAggregatorTestBase {
 
     @Test
     public void testGenerateContextWithCompleteFiles() {
-        List<FileEntry> files = new ArrayList<>();
-        files.add(new FileEntry(javaFile, Set.of(), true));
-        files.add(new FileEntry(textFile, Set.of(), true));
+        List<FileContextItem> files = new ArrayList<>();
+        files.add(FileContextItem.wholeFile(javaFile));
+        files.add(FileContextItem.wholeFile(textFile));
 
-
-        ContextGeneratorService generator = new ContextGeneratorService(files);
-        String context = generator.generateContext();
+        ContextGeneratorService generator = new ContextGeneratorService();
+        String context = generator.generateContext(files);
 
         Assert.assertNotNull(context);
         Assert.assertTrue(context.contains("# --- Code context ---"));
@@ -74,13 +72,12 @@ public class ContextGeneratorServiceTest extends FileAggregatorTestBase {
 
     @Test
     public void testGenerateContextWithSnippets() {
+        List<FileContextItem> files = new ArrayList<>();
+        files.add(FileContextItem.snippet(javaFile, new LineRange(2, 4)));
+        files.add(FileContextItem.snippet(javaFile, new LineRange(9, 11)));
 
-        List<FileEntry> files = new ArrayList<>();
-        FileEntry fileEntry = new FileEntry(javaFile, Set.of(new LineRange(2, 4), new LineRange(9, 11)), false);
-        files.add(fileEntry);
-
-        ContextGeneratorService generator = new ContextGeneratorService(files);
-        String context = generator.generateContext();
+        ContextGeneratorService generator = new ContextGeneratorService();
+        String context = generator.generateContext(files);
 
         Assert.assertNotNull(context);
         Assert.assertTrue(context.contains("### L2-4"));
@@ -94,14 +91,12 @@ public class ContextGeneratorServiceTest extends FileAggregatorTestBase {
 
     @Test
     public void testGenerateContextWithMixedFiles() {
+        List<FileContextItem> files = new ArrayList<>();
+        files.add(FileContextItem.snippet(javaFile, new LineRange(0, 2)));
+        files.add(FileContextItem.wholeFile(textFile));
 
-
-        List<FileEntry> files = new ArrayList<>();
-        files.add(new FileEntry(javaFile, Set.of(new LineRange(0, 2)), false));
-        files.add(new FileEntry(textFile, Set.of(), true));
-
-        ContextGeneratorService generator = new ContextGeneratorService(files);
-        String context = generator.generateContext();
+        ContextGeneratorService generator = new ContextGeneratorService();
+        String context = generator.generateContext(files);
 
         Assert.assertTrue(context.contains("### L0-2")); // Snippet format
         Assert.assertTrue(context.contains("# Project Title")); // Complete file content
@@ -109,10 +104,10 @@ public class ContextGeneratorServiceTest extends FileAggregatorTestBase {
 
     @Test
     public void testGenerateContextWithEmptyFiles() {
-        List<FileEntry> files = new ArrayList<>();
+        List<FileContextItem> files = new ArrayList<>();
 
-        ContextGeneratorService generator = new ContextGeneratorService(files);
-        String context = generator.generateContext();
+        ContextGeneratorService generator = new ContextGeneratorService();
+        String context = generator.generateContext(files);
 
         Assert.assertNotNull(context);
         Assert.assertTrue(context.contains("# --- Code context ---"));
@@ -121,11 +116,11 @@ public class ContextGeneratorServiceTest extends FileAggregatorTestBase {
 
     @Test
     public void testSnippetExtraction() {
-        List<FileEntry> files = new ArrayList<>();
-        files.add(new FileEntry(javaFile, Set.of(new LineRange(5, 7)), false));
+        List<FileContextItem> files = new ArrayList<>();
+        files.add(FileContextItem.snippet(javaFile, new LineRange(5, 7)));
 
-        ContextGeneratorService generator = new ContextGeneratorService(files);
-        String context = generator.generateContext();
+        ContextGeneratorService generator = new ContextGeneratorService();
+        String context = generator.generateContext(files);
 
         Assert.assertTrue(context.contains("public Example(String name)"));
         Assert.assertTrue(context.contains("this.name = name;"));
@@ -136,15 +131,13 @@ public class ContextGeneratorServiceTest extends FileAggregatorTestBase {
 
     @Test
     public void testInvalidLineRangeHandling() {
-        List<FileEntry> files = new ArrayList<>();
-        files.add(new FileEntry(javaFile, Set.of(new LineRange(-1, 2),    // Invalid start
-                new LineRange(100, 200), // Beyond file length
-                new LineRange(1, 3)      // Valid range
+        List<FileContextItem> files = new ArrayList<>();
+        files.add(FileContextItem.snippet(javaFile, new LineRange(-1, 2)));    // Invalid start
+        files.add(FileContextItem.snippet(javaFile, new LineRange(100, 200))); // Beyond file length
+        files.add(FileContextItem.snippet(javaFile, new LineRange(1, 3)));     // Valid range
 
-        ), false));
-
-        ContextGeneratorService generator = new ContextGeneratorService(files);
-        String context = generator.generateContext();
+        ContextGeneratorService generator = new ContextGeneratorService();
+        String context = generator.generateContext(files);
 
         // Should handle gracefully without throwing exceptions
         Assert.assertNotNull(context);

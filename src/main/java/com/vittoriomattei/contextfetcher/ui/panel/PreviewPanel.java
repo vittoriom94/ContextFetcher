@@ -26,7 +26,7 @@ public class PreviewPanel extends JPanel implements ContextUpdateListener, Dispo
         this.contextService = contextService;
 
         this.codePreviewField = new CodePanel(project);
-        this.statusLabel = new JBLabel(" "); // Space to maintain height
+        this.statusLabel = new JBLabel(" ");
 
         setupComponents();
 
@@ -34,11 +34,10 @@ public class PreviewPanel extends JPanel implements ContextUpdateListener, Dispo
 
         ActionToolbar actionToolbar = getActionToolbar();
 
-        topPanel.add(actionToolbar.getComponent(), BorderLayout.WEST); // Buttons on the left
-        topPanel.add(statusLabel, BorderLayout.CENTER);               // Status label takes remaining space
-
+        topPanel.add(actionToolbar.getComponent(), BorderLayout.WEST);
+        topPanel.add(statusLabel, BorderLayout.CENTER);
         add(topPanel, BorderLayout.NORTH);
-        add(codePreviewField, BorderLayout.CENTER); // Use getComponent() for an Editor
+        add(codePreviewField, BorderLayout.CENTER);
         this.contextService.addContextUpdateListener(this);
     }
 
@@ -49,18 +48,16 @@ public class PreviewPanel extends JPanel implements ContextUpdateListener, Dispo
         ActionToolbar actionToolbar = actionManager.createActionToolbar(
                 "ContextFetcherPreviewToolbar",
                 actionGroup,
-                true // true for horizontal layout
+                true
         );
-        actionToolbar.setTargetComponent(this); // Important for actions to get context
+        actionToolbar.setTargetComponent(this);
         return actionToolbar;
     }
 
     private void setupComponents() {
         codePreviewField.setBorder(JBUI.Borders.empty(5));
 
-
-        // Style status label
-        statusLabel.setBorder(JBUI.Borders.emptyLeft(10)); // Add some space from the buttons
+        statusLabel.setBorder(JBUI.Borders.emptyLeft(10));
         statusLabel.setFont(JBUI.Fonts.smallFont().deriveFont(Font.ITALIC));
         statusLabel.setForeground(UIManager.getColor("Label.disabledForeground"));
     }
@@ -76,5 +73,6 @@ public class PreviewPanel extends JPanel implements ContextUpdateListener, Dispo
             this.codePreviewField.setMarkdownText(newContent);
             statusLabel.setText(status);
         });
+
     }
 }
