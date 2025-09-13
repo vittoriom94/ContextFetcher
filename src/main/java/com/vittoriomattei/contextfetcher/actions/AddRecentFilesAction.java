@@ -6,7 +6,6 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBPanel;
 import com.vittoriomattei.contextfetcher.services.FileAggregatorService;
 import com.vittoriomattei.contextfetcher.ui.panel.RecentFilesPopupPanel;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +22,7 @@ public class AddRecentFilesAction extends AnAction {
         var project = e.getProject();
         List<VirtualFile> recentFiles = Arrays.asList(EditorHistoryManager.getInstance(Objects.requireNonNull(project)).getFiles());
         FileAggregatorService fileService = project.getService(FileAggregatorService.class);
-        JPanel popupPanel = new RecentFilesPopupPanel(recentFiles, selectedFile -> {
-            this.fileSelectedCallback(selectedFile, fileService);
-        });
+        JPanel popupPanel = new RecentFilesPopupPanel(recentFiles, selectedFile -> this.fileSelectedCallback(selectedFile, fileService));
 
         JBPopup popup = JBPopupFactory.getInstance()
                 .createComponentPopupBuilder(popupPanel, null)

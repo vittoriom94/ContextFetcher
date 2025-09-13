@@ -3,9 +3,7 @@ package com.vittoriomattei.contextfetcher.actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.Project;
 import com.vittoriomattei.contextfetcher.services.ContextGeneratorService;
-import com.vittoriomattei.contextfetcher.services.FileAggregatorService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;

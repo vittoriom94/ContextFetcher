@@ -14,13 +14,12 @@ public class FileAggregatorServiceTest extends FileAggregatorTestBase {
     private FileAggregatorServiceImpl service;
     private VirtualFile testFile1;
     private VirtualFile testFile2;
-    private String uniqueDir;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         service = new FileAggregatorServiceImpl();
-        uniqueDir = "testRun_" + System.currentTimeMillis();
+        String uniqueDir = "testRun_" + System.currentTimeMillis();
         testFile1 = createTestFile(uniqueDir + "/test1.java", "public class Test1 {\n    // content\n}");
         testFile2 = createTestFile(uniqueDir + "/test2.java", "public class Test2 {\n    // content\n}");
     }
@@ -54,7 +53,7 @@ public class FileAggregatorServiceTest extends FileAggregatorTestBase {
 
         List<FileContextItem> items = service.getItemsForFile(testFile1);
         assertEquals(1, items.size());
-        FileContextItem item = items.get(0);
+        FileContextItem item = items.getFirst();
         assertTrue(item.isSnippet());
         assertEquals(range, item.getLineRange());
     }
@@ -65,7 +64,7 @@ public class FileAggregatorServiceTest extends FileAggregatorTestBase {
         service.addFile(testFile1);
         List<FileContextItem> items = service.getItemsForFile(testFile1);
         assertEquals(1, items.size());
-        assertFalse(items.get(0).isSnippet());
+        assertFalse(items.getFirst().isSnippet());
 
         // Then add snippet - should not be added since file already tracked
         LineRange range = new LineRange(1, 5);
@@ -74,7 +73,7 @@ public class FileAggregatorServiceTest extends FileAggregatorTestBase {
         // Should still have just the whole file
         items = service.getItemsForFile(testFile1);
         assertEquals(1, items.size());
-        assertFalse(items.get(0).isSnippet());
+        assertFalse(items.getFirst().isSnippet());
     }
 
     @Test
@@ -103,8 +102,8 @@ public class FileAggregatorServiceTest extends FileAggregatorTestBase {
         
         assertEquals(0, items1.size());
         assertEquals(1, items2.size());
-        assertTrue(items2.get(0).isSnippet());
-        assertEquals(range2, items2.get(0).getLineRange());
+        assertTrue(items2.getFirst().isSnippet());
+        assertEquals(range2, items2.getFirst().getLineRange());
     }
 
     @Test

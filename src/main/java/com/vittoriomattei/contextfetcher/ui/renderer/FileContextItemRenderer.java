@@ -1,6 +1,5 @@
 package com.vittoriomattei.contextfetcher.ui.renderer;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;

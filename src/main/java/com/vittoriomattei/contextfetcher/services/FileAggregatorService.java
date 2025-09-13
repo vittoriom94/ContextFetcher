@@ -6,7 +6,6 @@ import com.vittoriomattei.contextfetcher.model.LineRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface FileAggregatorService {
 

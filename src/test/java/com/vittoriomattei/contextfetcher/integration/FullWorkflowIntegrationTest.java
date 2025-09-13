@@ -1,9 +1,7 @@
 package com.vittoriomattei.contextfetcher.integration;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.vittoriomattei.contextfetcher.model.FileContextItem;
 import com.vittoriomattei.contextfetcher.model.LineRange;
 import com.vittoriomattei.contextfetcher.services.ContextGeneratorService;
 import com.vittoriomattei.contextfetcher.services.FileAggregatorServiceImpl;
@@ -14,8 +12,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 
-import static org.junit.Assert.*;
-
 
 public class FullWorkflowIntegrationTest extends FileAggregatorTestBase {
 
@@ -23,12 +19,10 @@ public class FullWorkflowIntegrationTest extends FileAggregatorTestBase {
     private VirtualFile javaFile;
     private VirtualFile configFile;
 
-    private String uniqueDir;
-
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        uniqueDir = "testRun_" + System.currentTimeMillis();
+        String uniqueDir = "testRun_" + System.currentTimeMillis();
         aggregatorService = new FileAggregatorServiceImpl();
 
         javaFile = createTestFile(uniqueDir + "/Service.java",
@@ -140,7 +134,7 @@ public class FullWorkflowIntegrationTest extends FileAggregatorTestBase {
         try {
             // Simulate file being disposed/deleted
             var file = createTestFile("temp.java", "class Temp{}");
-            WriteAction.runAndWait(() -> {file.delete(null);});
+            WriteAction.runAndWait(() -> file.delete(null));
             return file;
         } catch (Exception e) {
             return null;

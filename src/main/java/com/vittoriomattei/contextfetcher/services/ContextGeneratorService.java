@@ -3,8 +3,6 @@ package com.vittoriomattei.contextfetcher.services;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -19,7 +17,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 

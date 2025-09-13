@@ -9,7 +9,6 @@ import com.vittoriomattei.contextfetcher.services.FileAggregatorService;
 import com.vittoriomattei.contextfetcher.util.DataKeys;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class RemoveSelectedAction extends AnAction {

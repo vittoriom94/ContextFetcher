@@ -1,12 +1,7 @@
 package com.vittoriomattei.contextfetcher.model;
 
-import com.google.common.collect.Comparators;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.Comparator;
 
 public class FileContextItem implements Comparable<FileContextItem> {
     private final VirtualFile virtualFile;
@@ -82,9 +77,9 @@ public class FileContextItem implements Comparable<FileContextItem> {
         if (fileComparison != 0 || (!this.isSnippet && !other.isSnippet)) {
             return fileComparison;
         }
-        if (!this.isSnippet && other.isSnippet) {
+        if (!this.isSnippet) {
             return -1;
-        } else if (this.isSnippet && !other.isSnippet) {
+        } else if (!other.isSnippet) {
             return 1;
         }
 

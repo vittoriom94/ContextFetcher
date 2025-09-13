@@ -17,12 +17,11 @@ public class ContextGeneratorServiceTest extends FileAggregatorTestBase {
 
     private VirtualFile javaFile;
     private VirtualFile textFile;
-    private String uniqueDir;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        uniqueDir = "testRun_" + System.currentTimeMillis();
+        String uniqueDir = "testRun_" + System.currentTimeMillis();
 
         javaFile = createTestFile(uniqueDir + "/Example.java", """
                 package com.example;

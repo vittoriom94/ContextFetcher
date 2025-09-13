@@ -38,8 +38,6 @@ public abstract class FileAggregatorTestBase extends BasePlatformTestCase {
         public boolean waitForEvents(long timeoutMs) throws InterruptedException {
             return latch.await(timeoutMs, TimeUnit.MILLISECONDS);
         }
-
-        public List<String> getEvents() { return new ArrayList<>(events); }
         public int getEventCount() { return events.size(); }
     }
 }
