@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.vittoriomattei.contextfetcher.model.LineRange;
 import com.vittoriomattei.contextfetcher.services.FileAggregatorService;
@@ -41,7 +40,5 @@ public class AddSelectionAction extends AnAction {
         }
         LineRange lineRange = new LineRange(startLine, endLine);
         service.addSnippet(file, lineRange);
-
-        Messages.showInfoMessage(project, "Added current file: " + file.getName(), "ContextFetcher");
     }
 }

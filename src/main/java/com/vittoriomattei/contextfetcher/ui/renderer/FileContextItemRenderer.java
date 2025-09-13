@@ -1,6 +1,5 @@
 package com.vittoriomattei.contextfetcher.ui.renderer;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
@@ -57,7 +56,7 @@ public class FileContextItemRenderer implements ListCellRenderer<FileContextItem
 
         // Secondary text (line range if snippet)
         if (value.isSnippet()) {
-            String rangeText = "Lines " + value.getLineRange().startLine() + "–" + value.getLineRange().endLine();
+            String rangeText = "Lines " + (value.getLineRange().startLine() + 1) + "–" + (value.getLineRange().endLine() + 1);
             JLabel rangeLabel = new JLabel(rangeText);
             rangeLabel.setFont(rangeLabel.getFont().deriveFont(Font.ITALIC, 11f));
             rangeLabel.setForeground(JBColor.GRAY);
@@ -66,20 +65,6 @@ public class FileContextItemRenderer implements ListCellRenderer<FileContextItem
 
         leftPanel.add(textPanel, BorderLayout.CENTER);
         panel.add(leftPanel, BorderLayout.CENTER);
-
-        // Right side: Action icons
-        JPanel iconsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
-        iconsPanel.setOpaque(false);
-
-        JLabel jumpIcon = new JLabel(AllIcons.Actions.Forward);
-        jumpIcon.setToolTipText("Jump to source");
-        JLabel removeIcon = new JLabel(AllIcons.General.Remove);
-        removeIcon.setToolTipText("Remove from context");
-
-        iconsPanel.add(jumpIcon);
-        iconsPanel.add(removeIcon);
-
-        panel.add(iconsPanel, BorderLayout.EAST);
 
         return panel;
     }

@@ -29,7 +29,5 @@ public class AddOpenFilesAction extends AnAction {
         FileAggregatorService service = project.getService(FileAggregatorService.class);
         List<VirtualFile> fileList = Arrays.asList(files);
         service.addFiles(fileList);
-
-        Messages.showInfoMessage(project, "Added " + files.length + " open file(s).", "ContextFetcher");
     }
 }

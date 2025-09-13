@@ -1,27 +1,25 @@
 package com.vittoriomattei.contextfetcher.services;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.vittoriomattei.contextfetcher.model.FileEntry;
+import com.vittoriomattei.contextfetcher.model.FileContextItem;
 import com.vittoriomattei.contextfetcher.model.LineRange;
 import com.vittoriomattei.contextfetcher.test.FileAggregatorTestBase;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Optional;
 
 public class FileAggregatorServiceTest extends FileAggregatorTestBase {
 
     private FileAggregatorServiceImpl service;
     private VirtualFile testFile1;
     private VirtualFile testFile2;
-    private String uniqueDir;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         service = new FileAggregatorServiceImpl();
-        uniqueDir = "testRun_" + System.currentTimeMillis();
+        String uniqueDir = "testRun_" + System.currentTimeMillis();
         testFile1 = createTestFile(uniqueDir + "/test1.java", "public class Test1 {\n    // content\n}");
         testFile2 = createTestFile(uniqueDir + "/test2.java", "public class Test2 {\n    // content\n}");
     }
@@ -53,28 +51,29 @@ public class FileAggregatorServiceTest extends FileAggregatorTestBase {
         LineRange range = new LineRange(1, 5);
         assertTrue(service.addSnippet(testFile1, range));
 
-        Optional<FileEntry> entry = service.getFileEntry(testFile1);
-        assertTrue(entry.isPresent());
-        assertFalse(entry.get().isCompleteFile());
-        assertTrue(entry.get().getSnippets().contains(range));
+        List<FileContextItem> items = service.getItemsForFile(testFile1);
+        assertEquals(1, items.size());
+        FileContextItem item = items.getFirst();
+        assertTrue(item.isSnippet());
+        assertEquals(range, item.getLineRange());
     }
 
     @Test
     public void testAddSnippetToExistingCompleteFile() {
         // First add as complete file
         service.addFile(testFile1);
-        Optional<FileEntry> entry = service.getFileEntry(testFile1);
-        assertTrue(entry.isPresent());
-        assertTrue(entry.get().isCompleteFile());
+        List<FileContextItem> items = service.getItemsForFile(testFile1);
+        assertEquals(1, items.size());
+        assertFalse(items.getFirst().isSnippet());
 
-        // Then add snippet - should convert to snippet-based
+        // Then add snippet - should not be added since file already tracked
         LineRange range = new LineRange(1, 5);
-        service.addSnippet(testFile1, range);
+        assertFalse(service.addSnippet(testFile1, range));
 
-        entry = service.getFileEntry(testFile1);
-        assertTrue(entry.isPresent());
-        assertFalse(entry.get().isCompleteFile());
-        assertTrue(entry.get().getSnippets().contains(range));
+        // Should still have just the whole file
+        items = service.getItemsForFile(testFile1);
+        assertEquals(1, items.size());
+        assertFalse(items.getFirst().isSnippet());
     }
 
     @Test
@@ -94,18 +93,21 @@ public class FileAggregatorServiceTest extends FileAggregatorTestBase {
         LineRange range2 = new LineRange(10, 15);
 
         service.addSnippet(testFile1, range1);
-        service.addSnippet(testFile1, range2);
+        service.addSnippet(testFile2, range2);
 
         assertTrue(service.removeSnippet(testFile1, range1));
 
-        Optional<FileEntry> entry = service.getFileEntry(testFile1);
-        assertTrue(entry.isPresent());
-        assertFalse(entry.get().getSnippets().contains(range1));
-        assertTrue(entry.get().getSnippets().contains(range2));
+        List<FileContextItem> items1 = service.getItemsForFile(testFile1);
+        List<FileContextItem> items2 = service.getItemsForFile(testFile2);
+        
+        assertEquals(0, items1.size());
+        assertEquals(1, items2.size());
+        assertTrue(items2.getFirst().isSnippet());
+        assertEquals(range2, items2.getFirst().getLineRange());
     }
 
     @Test
-    public void testRemoveLastSnippetRemovesFile() {
+    public void testRemoveSnippetRemovesFile() {
         LineRange range = new LineRange(1, 5);
         service.addSnippet(testFile1, range);
 

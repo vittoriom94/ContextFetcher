@@ -28,7 +28,7 @@
         <toolWindow
                 id="ContextAggregator"
                 anchor="right"
-                factoryClass="com.vittoriomattei.contextfetcher.ui.ContextAggregatorToolWindowFactory"/>
+                factoryClass="com.vittoriomattei.contextfetcher.ui.ContextFetcherToolWindowFactory"/>
 
 
         <!-- Project Service for File Management -->
@@ -36,66 +36,101 @@
                 serviceInterface="com.vittoriomattei.contextfetcher.services.FileAggregatorService"
                 serviceImplementation="com.vittoriomattei.contextfetcher.services.FileAggregatorServiceImpl"/>
 
+        <projectService
+                serviceImplementation="com.vittoriomattei.contextfetcher.services.ContextGeneratorService"/>
+
 
     </extensions>
     <actions>
-        <!-- Main Actions -->
-        <group id="ContextAggregator.MainGroup" text="Context Aggregator" popup="true">
-            <action id="ContextAggregator.AddCurrentFile"
-                    class="com.vittoriomattei.contextfetcher.actions.AddCurrentFileAction"
-                    text="Add Current File to Context"
-                    description="Add the currently open file to context"/>
+        <action id="ContextAggregator.AddFile"
+                class="com.vittoriomattei.contextfetcher.actions.AddFileAction"
+                text="Add File to Context"
+                description="Add the currently selected file or directory to context"
+                icon="AllIcons.Actions.AddFile"/>
 
-            <action id="ContextAggregator.AddOpenFiles"
-                    class="com.vittoriomattei.contextfetcher.actions.AddOpenFilesAction"
-                    text="Add All Open Files to Context"
-                    description="Add all currently open files to context"/>
+        <action id="ContextAggregator.AddOpenFiles"
+                class="com.vittoriomattei.contextfetcher.actions.AddOpenFilesAction"
+                text="Add All Open Files to Context"
+                description="Add all currently open files to context"
+                icon="AllIcons.Actions.AddList"/>
 
-            <action id="ContextAggregator.RunAggregation"
-                    class="com.vittoriomattei.contextfetcher.actions.RunAggregationAction"
-                    text="Generate Context Output"
-                    description="Generate formatted output of all files in context"/>
+        <action id="ContextAggregator.AddSelectionAction"
+                class="com.vittoriomattei.contextfetcher.actions.AddSelectionAction"
+                text="Add Selection to Context"
+                description="Adds selected lines or the current line to a custom context."/>
 
-            <action id="ContextAggregator.AddSelectionAction"
-                    class="com.vittoriomattei.contextfetcher.actions.AddSelectionAction"
-                    text="Add Selection to Context"
-                    description="Adds selected lines or the current line to a custom context."/>
+        <action id="ContextAggregator.GenerateContextOutput"
+                class="com.vittoriomattei.contextfetcher.actions.GenerateContextAction"
+                text="Generate Context Output"
+                description="Generate formatted output of all files in context"
+                icon="AllIcons.Toolwindows.ToolWindowRun"/>
 
-        </group>
+        <action id="ContextAggregator.RemoveSelected"
+                class="com.vittoriomattei.contextfetcher.actions.RemoveSelectedAction"
+                text="Remove Selected"
+                description="Remove selected files and snippets from context"
+                icon="AllIcons.General.Remove"/>
 
-        <action id="ContextAggregator.AddDirectory" class="com.vittoriomattei.contextfetcher.actions.AddDirectory"
-                text="Add Selected Directory"
-                description="Add all files in the selected directory to the context"/>
+        <action id="ContextAggregator.ClearAll"
+                class="com.vittoriomattei.contextfetcher.actions.ClearAllAction"
+                text="Clear All Context"
+                description="Clears all files and snippets from context"
+                icon="AllIcons.Actions.DeleteTag"/>
+        <action id="ContextAggregator.AddMultipleFiles"
+                class="com.vittoriomattei.contextfetcher.actions.AddRecentFilesAction"
+                text="Add..."
+                description="Add multiple files to context"
+                icon="AllIcons.General.Add"/>
+        <action id="ContextAggregator.ClearText"
+                class="com.vittoriomattei.contextfetcher.actions.ClearGeneratedTextAction"
+                text="Clear Text"
+                description="Clears the generated context text"
+                icon="AllIcons.Actions.ClearCash"
+        />
+
+        <action id="ContextAggregator.CopyToClipboard"
+                class="com.vittoriomattei.contextfetcher.actions.CopyGeneratedToClipboardAction"
+                text="Copy to Clipboard"
+                description="Copies the generated context text to the clipboard"
+                icon="AllIcons.Actions.Copy"/>
 
 
-        <!-- Add to main menu -->
-        <group id="ContextAggregator.MainMenu">
-            <reference ref="ContextAggregator.MainGroup"/>
+        <group id="ContextAggregator.ToolsMenuSubGroup" text="Context Fetcher" popup="true">
+            <reference ref="ContextAggregator.AddFile"/>
+            <reference ref="ContextAggregator.AddOpenFiles"/>
+            <reference ref="ContextAggregator.AddSelectionAction"/>
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </group>
 
-        <!-- Add to editor popup -->
-        <group id="ContextAggregator.SubMenu" text="My Context Actions" popup="true">
-
-            <reference ref="ContextAggregator.AddCurrentFile"/>
-
+        <group id="ContextAggregator.EditorPopupSubGroup" text="Context Fetcher" popup="true">
+            <reference ref="ContextAggregator.AddFile"/>
             <reference ref="ContextAggregator.AddSelectionAction"/>
-
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </group>
 
-        <!-- Add to Tab Popup menu -->
-        <group id="ContextAggregator.TabMenu">
-            <reference ref="ContextAggregator.AddCurrentFile"/>
+        <group id="ContextAggregator.TabMenu" popup="false">
+            <reference ref="ContextAggregator.AddFile"/>
             <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
         </group>
 
-
-        <!-- Add to Left Pane menu -->
-        <group id="ContextAggregator.PaneMenu">
-            <reference ref="ContextAggregator.AddCurrentFile"/>
-            <reference ref="ContextAggregator.AddDirectory"/>
+        <group id="ContextAggregator.PaneMenu" popup="false">
+            <reference ref="ContextAggregator.AddFile"/>
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </group>
+
+        <group id="ContextFetcher.MainToolbarGroup" text="ContextFetcher" popup="false">
+            <reference ref="ContextAggregator.AddMultipleFiles"/>
+            <reference ref="ContextAggregator.AddOpenFiles"/>
+            <reference ref="ContextAggregator.ClearAll"/>
+            <reference ref="ContextAggregator.RemoveSelected"/>
+            <reference ref="ContextAggregator.GenerateContextOutput"/>
+            <add-to-group group-id="MainToolBar" anchor="last"/>
+        </group>
+
+        <group id="ContextFetcher.GenerateContextToolbar" text="Generated Context Actions" popup="false">
+            <reference ref="ContextAggregator.ClearText"/>
+            <reference ref="ContextAggregator.CopyToClipboard"/>
+        </group>
+
     </actions>
 </idea-plugin>
